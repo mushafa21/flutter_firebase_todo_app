@@ -1,4 +1,8 @@
+import 'package:base_todolist/config/locator.dart';
+import 'package:base_todolist/config/shared_preference.dart';
 import 'package:base_todolist/model/item_list.dart';
+import 'package:base_todolist/ui/dimen.dart';
+import 'package:base_todolist/view/profile_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -15,18 +19,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   FirebaseAuth _auth = FirebaseAuth.instance;
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final CacheStore _cacheStore = locator.get();
 
   TextEditingController _titleController = TextEditingController();
   TextEditingController _descriptionController = TextEditingController();
   TextEditingController _searchController = TextEditingController();
   bool isComplete = false;
 
-  Future<void> _signOut() async {
-    await _auth.signOut();
-    runApp(new MaterialApp(
-      home: new LoginPage(),
-    ));
-  }
 
   void cleartext() {
     _titleController.clear();
@@ -50,7 +49,6 @@ class _HomePageState extends State<HomePage> {
 
   void initState() {
     super.initState();
-    // getTodo();
   }
   @override
   Widget build(BuildContext context) {
@@ -72,29 +70,9 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: Icon(Icons.person),
             onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: Text('Logout'),
-                  content: Text('Apakah anda yakin ingin logout?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: Text('Tidak'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        _signOut();
-                      },
-                      child: Text('Ya'),
-                    ),
-                  ],
-                ),
-              );
+              Navigator.push(context, MaterialPageRoute(builder: (context)=>ProfilePage()));
             },
           )
         ],
@@ -167,15 +145,18 @@ class _HomePageState extends State<HomePage> {
               title: Text('Tambah Todo'),
               content: SizedBox(
                 width: 200,
-                height: 100,
+                height: 200,
                 child: Column(
                   children: [
                     TextField(
                       controller: _titleController,
                       decoration: InputDecoration(hintText: 'Judul todo'),
                     ),
+                    SizedBox(height: spacing4,),
                     TextField(
                       controller: _descriptionController,
+                      minLines: 3,
+                      maxLines: 5,
                       decoration: InputDecoration(hintText: 'Deskripsi todo'),
                     ),
                   ],

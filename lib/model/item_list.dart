@@ -1,3 +1,4 @@
+import 'package:base_todolist/ui/dimen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'todo.dart';
@@ -46,7 +47,10 @@ class ItemList extends StatelessWidget {
                     hintText: 'Title',
                   ),
                 ),
+                SizedBox(height: spacing5,),
                 TextField(
+                  minLines: 3,
+                  maxLines: 5,
                   // ignore: unnecessary_null_comparison
                   controller: todo.description == null
                       ? _descriptionController
@@ -63,6 +67,7 @@ class ItemList extends StatelessWidget {
                 child: const Text('Batalkan'),
                 onPressed: () => Navigator.pop(context),
               ),
+              SizedBox(height: spacing4,),
               TextButton(
                 child: const Text('Update'),
                 onPressed: () {
@@ -98,17 +103,12 @@ class ItemList extends StatelessWidget {
                 children: [
                   Text(
                     todo.title,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.displaySmall,
                   ),
                   const SizedBox(height: 15),
                   Text(
                     todo.description,
-                    style: const TextStyle(
-                      fontSize: 16,
-                    ),
+                    style:Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),

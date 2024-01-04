@@ -1,4 +1,7 @@
+import 'package:base_todolist/config/locator.dart';
+import 'package:base_todolist/config/shared_preference.dart';
 import 'package:base_todolist/model/todo.dart';
+import 'package:base_todolist/ui/dimen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'home_page.dart';
@@ -14,6 +17,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _isLoading = false;
+  final CacheStore _cacheStore = locator.get();
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -39,6 +43,8 @@ class _LoginPageState extends State<LoginPage> {
         await _auth.signInWithEmailAndPassword(
             email: email, password: password);
         navigator.pushReplacement(MaterialPageRoute(builder: (context) {
+          _cacheStore.setLogin(true);
+          _cacheStore.setEmail(email);
           return HomePage();
         }));
       }
@@ -56,43 +62,29 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30),
+        padding: const EdgeInsets.symmetric(horizontal: paddingLarge),
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Welcome',
-              style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Text(
-              'Back',
-              style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-              ),
+             Text(
+              'Welcome Back!',
+              style: Theme.of(context).textTheme.displayLarge,
             ),
             const SizedBox(
-              height: 10,
+              height: spacing4,
             ),
-            const Text(
+             Text(
               'Sign in to continue',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(
-              height: 10,
+              height: spacing4,
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+              padding: const EdgeInsets.symmetric(vertical: spacing3, horizontal: spacing3),
               child: TextField(
                 controller: _emailController,
                 decoration: const InputDecoration(
@@ -103,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+              padding: const EdgeInsets.symmetric(vertical: spacing3, horizontal: spacing3),
               child: TextField(
                 controller: _passwordController,
                 obscureText: true,
@@ -114,41 +106,33 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: spacing3),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                 Text(
                   'Create new account?',
-                  style: TextStyle(fontSize: 16),
-                ),
+                  style: Theme.of(context).textTheme.titleMedium),
                 TextButton(
                   onPressed: toRegister,
                   child: const Text(
                     'Sign Up',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: spacing3),
             ElevatedButton(
               //size
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 15),
+                padding: const EdgeInsets.symmetric(vertical: spacing4),
               ),
               onPressed: login,
               child: const Text(
                 'Login',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: spacing3),
           ],
         ),
       ),
