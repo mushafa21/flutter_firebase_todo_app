@@ -1,8 +1,10 @@
 import 'package:base_todolist/config/locator.dart';
 import 'package:base_todolist/config/shared_preference.dart';
-import 'package:base_todolist/model/item_list.dart';
+import 'package:base_todolist/model/todo_category.dart';
+import 'package:base_todolist/view/widget/todo_category_item.dart';
+import 'package:base_todolist/view/widget/todo_item.dart';
 import 'package:base_todolist/ui/dimen.dart';
-import 'package:base_todolist/view/profile_page.dart';
+import 'package:base_todolist/view/add_category_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -23,8 +25,34 @@ class _HomePageState extends State<HomePage> {
 
   TextEditingController _titleController = TextEditingController();
   TextEditingController _descriptionController = TextEditingController();
-  TextEditingController _searchController = TextEditingController();
   bool isComplete = false;
+
+  Future<void> _signOut() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Logout'),
+        content: Text('Apakah anda yakin ingin logout?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text('Tidak'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await _auth.signOut();
+              _cacheStore.setLogin(false);
+              Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context)=>LoginPage()), (route) => false);
+            },
+            child: Text('Ya'),
+          ),
+        ],
+      ),
+    );
+
+  }
 
 
   void cleartext() {
@@ -32,18 +60,6 @@ class _HomePageState extends State<HomePage> {
     _descriptionController.clear();
   }
 
-  Future<QuerySnapshot>? searchResultsFuture;
-  Future<void> searchResult(String textEntered) async {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-        .collection("Todos")
-        .where("title", isGreaterThanOrEqualTo: textEntered)
-        .where("title", isLessThan: textEntered + 'z')
-        .get();
-
-    setState(() {
-      searchResultsFuture = Future.value(querySnapshot);
-    });
-  }
 
 
 
@@ -52,17 +68,8 @@ class _HomePageState extends State<HomePage> {
   }
   @override
   Widget build(BuildContext context) {
-    CollectionReference todoCollection = _firestore.collection('Todos');
     final User? user = _auth.currentUser;
-    Future<void> addTodo() {
-      return todoCollection.add({
-        'title': _titleController.text,
-        'description': _descriptionController.text,
-        'isComplete': isComplete,
-        'uid': _auth.currentUser!.uid,
-        // ignore: invalid_return_type_for_catch_error
-      }).catchError((error) => print('Failed to add todo: $error'));
-    }
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -70,67 +77,36 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.person),
+            icon: Icon(Icons.exit_to_app),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context)=>ProfilePage()));
+              _signOut();
             },
           )
         ],
       ),
       body: Column(
         children: [
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-            child: TextField(
-              decoration: InputDecoration(
-                  labelText: 'Search',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder()),
-              onChanged: (textEntered) {
-                searchResult(textEntered);
-
-                setState(() {
-                  _searchController.text = textEntered;
-                });
-              },
-            ),
-          ),
           Expanded(
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: _searchController.text.isEmpty
-                    ? _firestore
-                    .collection('Todos')
+                stream:_firestore
+                    .collection('TodosCategory')
                     .where('uid', isEqualTo: user!.uid)
                     .snapshots()
-                    : searchResultsFuture != null
-                    ? searchResultsFuture!
-                    .asStream()
-                    .cast<QuerySnapshot<Map<String, dynamic>>>()
-                    : Stream.empty(),
+                    ,
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Center(child: CircularProgressIndicator());
                   }
-                  List<Todo> listTodo = snapshot.data!.docs.map((document) {
-                    final data = document.data();
-                    final String title = data['title'];
-                    final String description = data['description'];
-                    final bool isComplete = data['isComplete'];
-                    final String uid = user!.uid;
-
-                    return Todo(
-                        description: description,
-                        title: title,
-                        isComplete: isComplete,
-                        uid: uid);
+                  List<TodoCategory> listTodo = snapshot.data!.docs.map((document) {
+                    return TodoCategory.fromJson(document.data());
                   }).toList();
                   return ListView.builder(
                       shrinkWrap: true,
                       itemCount: listTodo.length,
                       itemBuilder: (context, index) {
-                        return ItemList(
-                          todo: listTodo[index],
-                          transaksiDocId: snapshot.data!.docs[index].id,
+                        return TodoCategoryItem(
+                          todoCategory: listTodo[index],
+                          queryDocumentSnapshot: snapshot.data!.docs[index],
                         );
                       });
                 }),
@@ -139,45 +115,7 @@ class _HomePageState extends State<HomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text('Tambah Todo'),
-              content: SizedBox(
-                width: 200,
-                height: 200,
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: _titleController,
-                      decoration: InputDecoration(hintText: 'Judul todo'),
-                    ),
-                    SizedBox(height: spacing4,),
-                    TextField(
-                      controller: _descriptionController,
-                      minLines: 3,
-                      maxLines: 5,
-                      decoration: InputDecoration(hintText: 'Deskripsi todo'),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  child: Text('Batalkan'),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                TextButton(
-                  child: Text('Tambah'),
-                  onPressed: () {
-                    addTodo();
-                    cleartext();
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            ),
-          );
+          Navigator.of(context).push(MaterialPageRoute(builder: (context)=> AddCategoryPage()));
         },
         child: Icon(Icons.add),
       ),

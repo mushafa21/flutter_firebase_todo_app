@@ -1,28 +1,28 @@
 import 'package:base_todolist/ui/dimen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'todo.dart';
+import '../../model/todo.dart';
 
-class ItemList extends StatelessWidget {
+class TodoItem extends StatelessWidget {
   // dL7AVn1Xcb7Mr5A8Kcmj
   final String transaksiDocId;
   final Todo todo;
-  const ItemList({super.key, required this.todo, required this.transaksiDocId});
+  final QueryDocumentSnapshot categoryDocument;
+  const TodoItem({super.key, required this.todo, required this.transaksiDocId, required this.categoryDocument});
 
 
   @override
   Widget build(BuildContext context) {
-    FirebaseFirestore _firestore = FirebaseFirestore.instance;
-    CollectionReference todoCollection = _firestore.collection('Todos');
+    CollectionReference todoCollection = categoryDocument.reference.collection('Todos');
     TextEditingController _titleController = TextEditingController();
     TextEditingController _descriptionController = TextEditingController();
 
     Future<void> deleteTodo() async {
-      await _firestore.collection('Todos').doc(transaksiDocId).delete();
+      await categoryDocument.reference.collection('Todos').doc(transaksiDocId).delete();
     }
 
     Future<void> updateTodo() async {
-      await _firestore.collection('Todos').doc(transaksiDocId).update({
+      await categoryDocument.reference.collection('Todos').doc(transaksiDocId).update({
         'title': _titleController.text,
         'description': _descriptionController.text,
         'isComplete': false,
@@ -83,7 +83,7 @@ class ItemList extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 10),
         height: 100,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.background,
           borderRadius: BorderRadius.circular(10),
           boxShadow: const [
             BoxShadow(
@@ -122,7 +122,7 @@ class ItemList extends StatelessWidget {
                 color: todo.isComplete ? Colors.blue : Colors.grey,
               ),
               onPressed: () {
-                todoCollection.doc(transaksiDocId).update({
+                todoCollection?.doc(transaksiDocId).update({
                   'isComplete': !todo.isComplete,
                 });
               },
