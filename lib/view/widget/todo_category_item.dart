@@ -92,6 +92,8 @@ class TodoCategoryItem extends StatelessWidget {
                           child: Text('Tambah'),
                           onPressed: () {
                             addTodo();
+                            _titleController.clear();
+                            _descriptionController.clear();
                             Navigator.pop(context);
                           },
                         ),

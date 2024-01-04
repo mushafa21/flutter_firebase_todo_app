@@ -61,6 +61,7 @@ class _RegisterPageState extends State<RegisterPage> {
       setState(() {
         _isLoading = false;
       });
+      Navigator.pop(context);
     }
   }
 
